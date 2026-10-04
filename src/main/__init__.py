@@ -51,6 +51,7 @@ def status_report(name, robot_type, hp, max_hp, battery):
     """TODO(Q1)：一行自检报告字符串；档位判定与逐字符格式见题面 Q1 规范。"""
     # raise NotImplementedError("Q1 status_report：题面 Q1·电量映射与报告格式")
     hpratio = hp_ratio(hp, max_hp)
+    # 电量档位：>=50 OK, >=20 WARNING, <20 LOW
     if battery >= 50:
         battery_status = "OK"
     elif battery >= 20:
