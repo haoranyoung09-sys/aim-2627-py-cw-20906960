@@ -258,6 +258,7 @@ class SentryGrid:
         """TODO(Q3)：朝当前 facing 前进一格，返回执行后的位置；
         碰撞、耗电与断电语义见题面 Q3 规范。"""
         # raise NotImplementedError("Q3 move_forward：题面 Q3·前进、碰撞与断电")
+        # 电量耗尽时无论目标格是否可通行均抛错；碰撞不耗电、原位不动。
         if self._fuel <= 0:
             raise RuntimeError("电量耗尽，无法前进")
         dx, dy = self._facing.value
