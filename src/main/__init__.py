@@ -86,7 +86,25 @@ def analyze_damage_log(lines):
 
             # 尝试 JSON 行
             if line.startswith("{"):
-                continue  # Q2 commit 2 实现
+                obj = json.loads(line)
+                if not isinstance(obj, dict):
+                    continue
+                armor = obj.get("armor")
+                damage = obj.get("damage")
+                if armor not in VALID_ARMORS:
+                    continue
+                if (not isinstance(damage, int) or isinstance(damage, bool)
+                        or damage <= 0):
+                    continue
+                event_id = obj.get("id", None)
+                if event_id is not None:
+                    if event_id in seen_ids:
+                        continue
+                    seen_ids.add(event_id)
+                by_armor[armor] += damage
+                total += damage
+                count += 1
+                continue
 
             # 尝试传感器行 "F:32,L:5,R:12"
             segments = line.split(",")
