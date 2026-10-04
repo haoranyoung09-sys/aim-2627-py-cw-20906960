@@ -244,7 +244,15 @@ class SentryGrid:
     @current_pos.setter
     def current_pos(self, value):
         """TODO(Q3)：位置 setter；三重输入校验见题面 Q3 规范第 1 条。"""
-        raise NotImplementedError("Q3 current_pos.setter：题面 Q3·位置校验三步")
+        # raise NotImplementedError("Q3 current_pos.setter：题面 Q3·位置校验三步")
+        if not isinstance(value, (tuple, list)) or len(value) != 2:
+            raise TypeError("value 需要长度为 2 的 tuple/list")
+        x, y = int(value[0]), int(value[1])
+        if not (0 <= x < self._width and 0 <= y < self._height):
+            raise IndexError("位置越界")
+        if (x, y) in self._obstacles:
+            raise ValueError("位置在障碍物上")
+        self._pos = (x, y)
 
     def move_forward(self):
         """TODO(Q3)：朝当前 facing 前进一格，返回执行后的位置；
@@ -253,11 +261,19 @@ class SentryGrid:
 
     def turn_left(self):
         """TODO(Q3)：原地左转 90°，返回新的 Facing（不耗电）。"""
-        raise NotImplementedError("Q3 turn_left")
+        # raise NotImplementedError("Q3 turn_left")
+        order = [Facing.UP, Facing.LEFT, Facing.DOWN, Facing.RIGHT]
+        idx = order.index(self._facing)
+        self._facing = order[(idx + 1) % 4]
+        return self._facing
 
     def turn_right(self):
         """TODO(Q3)：原地右转 90°，返回新的 Facing（不耗电）。"""
-        raise NotImplementedError("Q3 turn_right")
+        # raise NotImplementedError("Q3 turn_right")
+        order = [Facing.UP, Facing.RIGHT, Facing.DOWN, Facing.LEFT]
+        idx = order.index(self._facing)
+        self._facing = order[(idx + 1) % 4]
+        return self._facing
 
 
 # ---------------------------------------------------------------------------
