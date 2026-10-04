@@ -37,6 +37,7 @@ class Facing(Enum):
 # ---------------------------------------------------------------------------
 def hp_ratio(hp, max_hp):
     """TODO(Q1)：血量百分比，返回 0-100 的 int；计算与边界规则见题面 Q1 规范。"""
+    # raise NotImplementedError("Q1 hp_ratio：题面 Q1·血量百分比与精度保障")
     if max_hp <= 0:
         return 0
     if hp < 0:
@@ -49,8 +50,9 @@ def hp_ratio(hp, max_hp):
 
 def status_report(name, robot_type, hp, max_hp, battery):
     """TODO(Q1)：一行自检报告字符串；档位判定与逐字符格式见题面 Q1 规范。"""
+    # raise NotImplementedError("Q1 status_report：题面 Q1·电量映射与报告格式")
     hpratio = hp_ratio(hp, max_hp)
-    # Battery tiers: >=50 OK, >=20 WARNING, <20 LOW
+    # 电量档位：>=50 OK, >=20 WARNING, <20 LOW
     if battery >= 50:
         battery_status = "OK"
     elif battery >= 20:
@@ -68,6 +70,7 @@ def status_report(name, robot_type, hp, max_hp, battery):
 def analyze_damage_log(lines):
     """TODO(Q2)：解析混合格式伤害日志，返回固定契约的统计 dict；
     行格式、去重与统计口径见题面 Q2 规范。"""
+    # raise NotImplementedError("Q2 analyze_damage_log：题面 Q2·多源日志解析与统计")
     ARMOR_MAP = {"F": "front", "L": "left", "R": "right"}
     VALID_ARMORS = {"front", "left", "right"}
 
@@ -82,7 +85,7 @@ def analyze_damage_log(lines):
             if not line or line.startswith("#"):
                 continue
 
-            # Try JSON line
+            # 尝试 JSON 行
             if line.startswith("{"):
                 obj = json.loads(line)
                 if not isinstance(obj, dict):
@@ -104,7 +107,7 @@ def analyze_damage_log(lines):
                 count += 1
                 continue
 
-            # Try sensor line "F:32,L:5,R:12"
+            # 尝试传感器行 "F:32,L:5,R:12"
             segments = line.split(",")
             parsed = {}
             ok = True
@@ -127,7 +130,7 @@ def analyze_damage_log(lines):
                 if val <= 0:
                     ok = False
                     break
-                if letter in parsed:  # duplicate letter -> dirty line
+                if letter in parsed:  # 同字母重复出现视为脏行
                     ok = False
                     break
                 parsed[letter] = val
