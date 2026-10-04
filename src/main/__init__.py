@@ -520,7 +520,8 @@ def _retreat_direction(grid):
 
 def report_to_json(stats):
     """TODO(Q6)：把 stats 序列化为确定性的 JSON 字符串，见题面 Q6 规范。"""
-    raise NotImplementedError("Q6 report_to_json：题面 Q6·报告序列化")
+    # raise NotImplementedError("Q6 report_to_json：题面 Q6·报告序列化")
+    return json.dumps(stats, sort_keys=True, ensure_ascii=False)
 
 
 # ---------------------------------------------------------------------------
@@ -528,7 +529,31 @@ def report_to_json(stats):
 # ---------------------------------------------------------------------------
 def bfs_path_length(start, target, obstacles):
     """TODO(Bonus)：BFS 全局最短路步数；返回语义与边界职责见题面 Bonus 规范。"""
-    raise NotImplementedError("Bonus bfs_path_length")
+    # raise NotImplementedError("Bonus bfs_path_length")
+    start = (int(start[0]), int(start[1]))
+    target = (int(target[0]), int(target[1]))
+    if start == target:
+        return 0
+    obs = set()
+    for ob in obstacles:
+        obs.add((int(ob[0]), int(ob[1])))
+    if target in obs or start in obs:
+        return -1
+    from collections import deque
+    visited = {start}
+    queue = deque([(start, 0)])
+    dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    while queue:
+        (x, y), d = queue.popleft()
+        for dx, dy in dirs:
+            nxt = (x + dx, y + dy)
+            if nxt == target:
+                return d + 1
+            if nxt in obs or nxt in visited:
+                continue
+            visited.add(nxt)
+            queue.append((nxt, d + 1))
+    return -1
 
 
 # ---------------------------------------------------------------------------
