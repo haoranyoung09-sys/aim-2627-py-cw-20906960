@@ -77,15 +77,17 @@ def summarize_events(events, max_id):
     used = 0
     steps = 0
     for e in events:
-        if e["id"] < max_id:
+        if e["id"] <= max_id:
             used += 1
             steps += e["move"] + calibrate(e["samples"])
     return {"events": used, "steps": steps}
 
 
-def log(message, history=[]):
+def log(message, history=None):
     """向历史追加一条日志并返回整个历史列表。
     不显式传入 history 时，每次调用都从空历史开始。"""
+    if history is None:
+        history = []
     history.append(message)
     return history
 
