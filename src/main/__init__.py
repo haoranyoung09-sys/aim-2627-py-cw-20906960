@@ -311,14 +311,14 @@ def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
         elif dx < 0:
             primary.append(Facing.LEFT)
         if dy > 0:
-            secondary.append(Facing.DOWN)
-        elif dy < 0:
             secondary.append(Facing.UP)
+        elif dy < 0:
+            secondary.append(Facing.DOWN)
     else:
         if dy > 0:
-            primary.append(Facing.DOWN)
-        elif dy < 0:
             primary.append(Facing.UP)
+        elif dy < 0:
+            primary.append(Facing.DOWN)
         if dx > 0:
             secondary.append(Facing.RIGHT)
         elif dx < 0:
