@@ -69,7 +69,73 @@ def status_report(name, robot_type, hp, max_hp, battery):
 def analyze_damage_log(lines):
     """TODO(Q2)：解析混合格式伤害日志，返回固定契约的统计 dict；
     行格式、去重与统计口径见题面 Q2 规范。"""
-    raise NotImplementedError("Q2 analyze_damage_log：题面 Q2·多源日志解析与统计")
+    # raise NotImplementedError("Q2 analyze_damage_log：题面 Q2·多源日志解析与统计")
+    ARMOR_MAP = {"F": "front", "L": "left", "R": "right"}
+    VALID_ARMORS = {"front", "left", "right"}
+
+    by_armor = {"front": 0, "left": 0, "right": 0}
+    total = 0
+    count = 0
+    seen_ids = set()
+
+    for raw in lines:
+        try:
+            line = raw.strip() if isinstance(raw, str) else None
+            if not line or line.startswith("#"):
+                continue
+
+            # 尝试 JSON 行
+            if line.startswith("{"):
+                continue  # Q2 commit 2 实现
+
+            # 尝试传感器行 "F:32,L:5,R:12"
+            segments = line.split(",")
+            parsed = {}
+            ok = True
+            for seg in segments:
+                seg = seg.strip()
+                if ":" not in seg:
+                    ok = False
+                    break
+                letter, _, num_str = seg.partition(":")
+                letter = letter.strip()
+                num_str = num_str.strip()
+                if letter not in ARMOR_MAP:
+                    ok = False
+                    break
+                try:
+                    val = int(num_str)
+                except (TypeError, ValueError):
+                    ok = False
+                    break
+                if val <= 0:
+                    ok = False
+                    break
+                if letter in parsed:  # 同字母重复出现视为脏行
+                    ok = False
+                    break
+                parsed[letter] = val
+            if not ok or not parsed:
+                continue
+            for letter, val in parsed.items():
+                armor = ARMOR_MAP[letter]
+                by_armor[armor] += val
+                total += val
+                count += 1
+        except (ValueError, TypeError, KeyError):
+            continue
+
+    if count == 0:
+        most_hit = None
+        avg = 0.0
+    else:
+        most_hit = max(by_armor, key=lambda a: by_armor[a])
+        if by_armor[most_hit] == 0:
+            most_hit = None
+        avg = round(total / count, 2)
+
+    return {"total": total, "by_armor": by_armor,
+            "most_hit": most_hit, "avg": avg}
 
 
 # ---------------------------------------------------------------------------
