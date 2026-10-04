@@ -257,7 +257,8 @@ class SentryGrid:
     def move_forward(self):
         """TODO(Q3)：朝当前 facing 前进一格，返回执行后的位置；
         碰撞、耗电与断电语义见题面 Q3 规范。"""
-        # 电量耗尽时无论目标格是否可通行均抛错；碰撞不耗电、原位不动。
+        # Out of fuel always raises regardless of target cell;
+        # collision does not consume fuel and stays in place.
         if self._fuel <= 0:
             raise RuntimeError("电量耗尽，无法前进")
         dx, dy = self._facing.value
@@ -296,7 +297,7 @@ def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
     dx = tx - px
     dy = ty - py
 
-    # 主轴：水平差 >= 垂直差时优先水平，否则优先垂直
+    # Primary axis: prefer horizontal when |dx| >= |dy|, else vertical
     horiz_first = abs(dx) >= abs(dy)
 
     primary = []
@@ -320,7 +321,7 @@ def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
         elif dx < 0:
             secondary.append(Facing.LEFT)
 
-    # 障碍判定：跳过被障碍物占据的候选方向；全部阻塞则回退到 current_facing
+    # Obstacle check: skip blocked directions; fall back to current facing
     obstacle_set = set(obstacles) if obstacles else set()
     for cand in primary + secondary:
         cdx, cdy = cand.value
@@ -346,7 +347,7 @@ class SentryState(Enum):
 def decide(sensor, state, hp, heat):
     """TODO(Q5)：纯函数决策，返回 (action: str, new_state: SentryState)；
     sensor 字段契约、R1-R7 规则表与非法输入处理见题面 Q5 规范。"""
-    # ---- 输入契约校验 ----
+    # ---- input contract validation ----
     if not isinstance(sensor, dict):
         raise ValueError("sensor 必须为 dict")
     frames = sensor.get("enemy_frames")
@@ -360,7 +361,7 @@ def decide(sensor, state, hp, heat):
     enemy_seen = any(frames)
     two_frames = len(frames) >= 2 and frames[-1] and frames[-2]
 
-    # 低血量（≤20%）最高优先级：直接撤退，覆盖所有状态
+    # Low HP (<=20%) highest priority: retreat, overrides all states
     ratio = hp_ratio(hp, max_hp)
     if ratio <= 20:
         return ("RETREAT", SentryState.RETREAT)
@@ -437,7 +438,7 @@ def run_patrol(grid, max_steps=500):
                 grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
             _face_and_move(grid, direction)
         elif action == "RETREAT":
-            # 向远离敌人的方向移动
+            # Move away from the enemy
             direction = _retreat_direction(grid)
             _face_and_move(grid, direction)
         elif action in ("RETURN", "MOVE_BASE"):
@@ -455,7 +456,7 @@ def run_patrol(grid, max_steps=500):
 
 
 def _turn_to(grid, direction):
-    """原地转向到目标方向（最多 3 次 turn_left/right）。"""
+    """Turn in place to face the target direction (at most 3 turns)."""
     order_cw = [Facing.UP, Facing.RIGHT, Facing.DOWN, Facing.LEFT]
     cur = order_cw.index(grid.facing)
     tgt = order_cw.index(direction)
@@ -471,13 +472,13 @@ def _turn_to(grid, direction):
 
 
 def _face_and_move(grid, direction):
-    """转向并前进一格。"""
+    """Turn to face direction and move forward one cell."""
     _turn_to(grid, direction)
     grid.move_forward()
 
 
 def _retreat_direction(grid):
-    """选择远离敌人且不被阻挡的方向。"""
+    """Pick a direction away from the enemy that is not blocked."""
     px, py = grid.current_pos
     ex, ey = grid.enemy_pos
     dx = px - ex
