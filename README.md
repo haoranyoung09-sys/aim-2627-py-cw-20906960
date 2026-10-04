@@ -68,3 +68,14 @@ python main.py
 
 CI 只允许修改 `src/main/**`、`README.md` 与 `.agent-sessions/**`（AI 会话归档）——其余文件改了直接红；autopep8 `--diff` 非空即败。提交方式（push、问卷、commit 粒度）见题面"提交与验收"一节。
 
+## 6. Q7 遗留模块缺陷修复说明
+
+`src/main/legacy_patrol.py` 共修复 6 处 bug：
+
+1. **`total_route_meters` 单位换算错误**：`segment_length_cm` 返回厘米，但函数直接累加后未除以 100，导致返回值单位仍是厘米。修复：`return distance_in_meters / 100`。
+2. **`calibrate` 未处理 `baseline` 为 `None`**：当样本中没有正数时，`first_positive` 返回 `None`，随后 `s - baseline` 抛出 `TypeError`。修复：`baseline is None` 时直接返回 0。
+3. **`summarize_events` 比较运算符错误**：契约要求"id 不超过 max_id"，原代码用 `e["id"] < max_id`，漏掉了 id 等于 max_id 的事件。修复：改为 `e["id"] <= max_id`。
+4. **`log` 可变默认参数**：`history=[]` 在函数定义时创建一次，多次调用会共享同一个列表。修复：改为 `history=None`，函数内判空初始化。
+5. **`run_legacy_sim` 缺少循环自增**：`while` 循环内 `round_` 从未递增，导致死循环。修复：在循环末尾添加 `round_ += 1`。
+6. **`run_legacy_sim` 终止条件反转**：契约要求体力 `<= 20` 时终止，原代码写的是 `if stamina > 20: break`，逻辑完全相反。修复：改为 `if stamina <= 20: break`。
+
