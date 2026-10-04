@@ -365,7 +365,7 @@ def decide(sensor, state, hp, heat):
     enemy_seen = any(frames)
     two_frames = len(frames) >= 2 and frames[-1] and frames[-2]
 
-    # Q5 commit 2: ENGAGE/RETREAT/RETURN + 低血量优先级
+    # Q5 commit 2: ENGAGE/RETREAT/RETURN
     if state == SentryState.PATROL:
         if enemy_seen:
             return ("SCAN", SentryState.SUSPECT)
@@ -376,6 +376,16 @@ def decide(sensor, state, hp, heat):
         if enemy_seen:
             return ("SCAN", SentryState.SUSPECT)
         return ("PATROL_MOVE", SentryState.PATROL)
+    elif state == SentryState.ENGAGE:
+        if enemy_seen:
+            return ("SHOOT", SentryState.ENGAGE)
+        return ("SCAN", SentryState.SUSPECT)
+    elif state == SentryState.RETREAT:
+        if not enemy_seen:
+            return ("RETURN", SentryState.RETURN)
+        return ("RETREAT", SentryState.RETREAT)
+    elif state == SentryState.RETURN:
+        return ("MOVE_BASE", SentryState.PATROL)
     return ("PATROL_MOVE", SentryState.PATROL)
 
 
