@@ -147,6 +147,7 @@ def analyze_damage_log(lines):
         most_hit = None
         avg = 0.0
     else:
+        # most_hit 取累计伤害最高的装甲面；全为 0 则为 None
         most_hit = max(by_armor, key=lambda a: by_armor[a])
         if by_armor[most_hit] == 0:
             most_hit = None
