@@ -324,9 +324,14 @@ def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
         elif dx < 0:
             secondary.append(Facing.LEFT)
 
-    # Q4 commit 2: 加入障碍判定与回退
-    candidates = primary + secondary
-    return candidates[0] if candidates else current_facing
+    # 障碍判定：跳过被障碍物占据的候选方向；全部阻塞则回退到 current_facing
+    obstacle_set = set(obstacles) if obstacles else set()
+    for cand in primary + secondary:
+        cdx, cdy = cand.value
+        nxt = (px + cdx, py + cdy)
+        if nxt not in obstacle_set:
+            return cand
+    return current_facing
 
 
 # ---------------------------------------------------------------------------
