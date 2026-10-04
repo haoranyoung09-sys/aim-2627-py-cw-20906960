@@ -400,7 +400,122 @@ def decide(sensor, state, hp, heat):
 def run_patrol(grid, max_steps=500):
     """TODO(Q6)：sense → decide → act 主循环；
     循环结构、终止条件、脱困自由度与统计返回契约见题面 Q6 规范。"""
-    raise NotImplementedError("Q6 run_patrol：题面 Q6·主循环与统计契约")
+    # raise NotImplementedError("Q6 run_patrol：题面 Q6·主循环与统计契约")
+    start_pos = grid.current_pos
+    state = SentryState.PATROL
+    hp = 100
+    max_hp = 100
+    heat = 0
+    collisions = 0
+    steps = 0
+    enemy_frames = []
+
+    for step in range(max_steps):
+        steps = step + 1
+        # ---- sense ----
+        px, py = grid.current_pos
+        ex, ey = grid.enemy_pos
+        dist = abs(px - ex) + abs(py - ey)
+        in_range = dist <= 4
+        enemy_frames.append(in_range)
+        if len(enemy_frames) > 3:
+            enemy_frames.pop(0)
+        sensor = {
+            "enemy_frames": tuple(enemy_frames),
+            "enemy_dist": dist if in_range else None,
+            "robot_type": "INFANTRY",
+            "max_hp": max_hp,
+        }
+
+        # ---- decide ----
+        action, state = decide(sensor, state, hp, heat)
+
+        # ---- act ----
+        if action == "PATROL_MOVE":
+            direction = next_step_toward(
+                grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
+            _face_and_move(grid, direction)
+        elif action == "SCAN":
+            direction = next_step_toward(
+                grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
+            _turn_to(grid, direction)
+        elif action == "SHOOT":
+            direction = next_step_toward(
+                grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
+            _turn_to(grid, direction)
+        elif action == "RETREAT":
+            # 向远离敌人的方向移动
+            direction = _retreat_direction(grid)
+            _face_and_move(grid, direction)
+        elif action in ("RETURN", "MOVE_BASE"):
+            direction = next_step_toward(
+                grid.current_pos, start_pos, grid.obstacles, grid.facing)
+            _face_and_move(grid, direction)
+
+        collisions = grid.collision_count
+        if grid.found_enemy:
+            return {"success": True, "steps": steps,
+                    "collisions": collisions, "state": state.value}
+
+    return {"success": grid.found_enemy, "steps": steps,
+            "collisions": collisions, "state": state.value}
+
+
+def _turn_to(grid, direction):
+    """原地转向到目标方向（最多 3 次 turn_left/right）。"""
+    order_cw = [Facing.UP, Facing.RIGHT, Facing.DOWN, Facing.LEFT]
+    cur = order_cw.index(grid.facing)
+    tgt = order_cw.index(direction)
+    diff = (tgt - cur) % 4
+    if diff == 0:
+        return
+    if diff <= 2:
+        for _ in range(diff):
+            grid.turn_right()
+    else:
+        for _ in range(4 - diff):
+            grid.turn_left()
+
+
+def _face_and_move(grid, direction):
+    """转向并前进一格。"""
+    _turn_to(grid, direction)
+    grid.move_forward()
+
+
+def _retreat_direction(grid):
+    """选择远离敌人且不被阻挡的方向。"""
+    px, py = grid.current_pos
+    ex, ey = grid.enemy_pos
+    dx = px - ex
+    dy = py - ey
+    horiz_first = abs(dx) >= abs(dy)
+    cands = []
+    if horiz_first:
+        if dx > 0:
+            cands.append(Facing.RIGHT)
+        elif dx < 0:
+            cands.append(Facing.LEFT)
+        if dy > 0:
+            cands.append(Facing.UP)
+        elif dy < 0:
+            cands.append(Facing.DOWN)
+    else:
+        if dy > 0:
+            cands.append(Facing.UP)
+        elif dy < 0:
+            cands.append(Facing.DOWN)
+        if dx > 0:
+            cands.append(Facing.RIGHT)
+        elif dx < 0:
+            cands.append(Facing.LEFT)
+    obs = grid.obstacles
+    for c in cands:
+        cdx, cdy = c.value
+        nxt = (px + cdx, py + cdy)
+        if nxt not in obs and 0 <= nxt[0] < grid.width and 0 <= nxt[1] < grid.height:
+            return c
+    return grid.facing
 
 
 def report_to_json(stats):
