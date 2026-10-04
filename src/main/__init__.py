@@ -294,7 +294,39 @@ class SentryGrid:
 def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
     """TODO(Q4)：返回下一步应朝向的 Facing；
     候选判定、优先级与回退规则见题面 Q4 规范。"""
-    raise NotImplementedError("Q4 next_step_toward：题面 Q4·贪心策略与回退")
+    # raise NotImplementedError("Q4 next_step_toward：题面 Q4·贪心策略与回退")
+    px, py = pos
+    tx, ty = target
+    dx = tx - px
+    dy = ty - py
+
+    # 主轴：水平差 >= 垂直差时优先水平，否则优先垂直
+    horiz_first = abs(dx) >= abs(dy)
+
+    primary = []
+    secondary = []
+    if horiz_first:
+        if dx > 0:
+            primary.append(Facing.RIGHT)
+        elif dx < 0:
+            primary.append(Facing.LEFT)
+        if dy > 0:
+            secondary.append(Facing.DOWN)
+        elif dy < 0:
+            secondary.append(Facing.UP)
+    else:
+        if dy > 0:
+            primary.append(Facing.DOWN)
+        elif dy < 0:
+            primary.append(Facing.UP)
+        if dx > 0:
+            secondary.append(Facing.RIGHT)
+        elif dx < 0:
+            secondary.append(Facing.LEFT)
+
+    # Q4 commit 2: 加入障碍判定与回退
+    candidates = primary + secondary
+    return candidates[0] if candidates else current_facing
 
 
 # ---------------------------------------------------------------------------
