@@ -438,11 +438,11 @@ def run_patrol(grid, max_steps=500):
         elif action == "SCAN":
             direction = next_step_toward(
                 grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
-            _turn_to(grid, direction)
+            _face_and_move(grid, direction)
         elif action == "SHOOT":
             direction = next_step_toward(
                 grid.current_pos, grid.enemy_pos, grid.obstacles, grid.facing)
-            _turn_to(grid, direction)
+            _face_and_move(grid, direction)
         elif action == "RETREAT":
             # 向远离敌人的方向移动
             direction = _retreat_direction(grid)
