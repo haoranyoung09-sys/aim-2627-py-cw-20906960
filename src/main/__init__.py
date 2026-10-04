@@ -11,6 +11,7 @@
 - `python main.py`（或 PYTHONPATH=src python -m main）可看 ASCII 演示。
 """
 import json
+from collections import deque
 from enum import Enum
 
 
@@ -36,7 +37,6 @@ class Facing(Enum):
 # ---------------------------------------------------------------------------
 def hp_ratio(hp, max_hp):
     """TODO(Q1)：血量百分比，返回 0-100 的 int；计算与边界规则见题面 Q1 规范。"""
-    # raise NotImplementedError("Q1 hp_ratio：题面 Q1·血量百分比与精度保障")
     if max_hp <= 0:
         return 0
     if hp < 0:
@@ -49,9 +49,8 @@ def hp_ratio(hp, max_hp):
 
 def status_report(name, robot_type, hp, max_hp, battery):
     """TODO(Q1)：一行自检报告字符串；档位判定与逐字符格式见题面 Q1 规范。"""
-    # raise NotImplementedError("Q1 status_report：题面 Q1·电量映射与报告格式")
     hpratio = hp_ratio(hp, max_hp)
-    # 电量档位：>=50 OK, >=20 WARNING, <20 LOW
+    # Battery tiers: >=50 OK, >=20 WARNING, <20 LOW
     if battery >= 50:
         battery_status = "OK"
     elif battery >= 20:
@@ -69,7 +68,6 @@ def status_report(name, robot_type, hp, max_hp, battery):
 def analyze_damage_log(lines):
     """TODO(Q2)：解析混合格式伤害日志，返回固定契约的统计 dict；
     行格式、去重与统计口径见题面 Q2 规范。"""
-    # raise NotImplementedError("Q2 analyze_damage_log：题面 Q2·多源日志解析与统计")
     ARMOR_MAP = {"F": "front", "L": "left", "R": "right"}
     VALID_ARMORS = {"front", "left", "right"}
 
@@ -84,7 +82,7 @@ def analyze_damage_log(lines):
             if not line or line.startswith("#"):
                 continue
 
-            # 尝试 JSON 行
+            # Try JSON line
             if line.startswith("{"):
                 obj = json.loads(line)
                 if not isinstance(obj, dict):
@@ -106,7 +104,7 @@ def analyze_damage_log(lines):
                 count += 1
                 continue
 
-            # 尝试传感器行 "F:32,L:5,R:12"
+            # Try sensor line "F:32,L:5,R:12"
             segments = line.split(",")
             parsed = {}
             ok = True
@@ -129,7 +127,7 @@ def analyze_damage_log(lines):
                 if val <= 0:
                     ok = False
                     break
-                if letter in parsed:  # 同字母重复出现视为脏行
+                if letter in parsed:  # duplicate letter -> dirty line
                     ok = False
                     break
                 parsed[letter] = val
@@ -244,7 +242,6 @@ class SentryGrid:
     @current_pos.setter
     def current_pos(self, value):
         """TODO(Q3)：位置 setter；三重输入校验见题面 Q3 规范第 1 条。"""
-        # raise NotImplementedError("Q3 current_pos.setter：题面 Q3·位置校验三步")
         if not isinstance(value, (tuple, list)) or len(value) != 2:
             raise TypeError("value 需要长度为 2 的 tuple/list")
         x, y = int(value[0]), int(value[1])
@@ -257,7 +254,6 @@ class SentryGrid:
     def move_forward(self):
         """TODO(Q3)：朝当前 facing 前进一格，返回执行后的位置；
         碰撞、耗电与断电语义见题面 Q3 规范。"""
-        # raise NotImplementedError("Q3 move_forward：题面 Q3·前进、碰撞与断电")
         # 电量耗尽时无论目标格是否可通行均抛错；碰撞不耗电、原位不动。
         if self._fuel <= 0:
             raise RuntimeError("电量耗尽，无法前进")
@@ -273,7 +269,6 @@ class SentryGrid:
 
     def turn_left(self):
         """TODO(Q3)：原地左转 90°，返回新的 Facing（不耗电）。"""
-        # raise NotImplementedError("Q3 turn_left")
         order = [Facing.UP, Facing.LEFT, Facing.DOWN, Facing.RIGHT]
         idx = order.index(self._facing)
         self._facing = order[(idx + 1) % 4]
@@ -281,7 +276,6 @@ class SentryGrid:
 
     def turn_right(self):
         """TODO(Q3)：原地右转 90°，返回新的 Facing（不耗电）。"""
-        # raise NotImplementedError("Q3 turn_right")
         order = [Facing.UP, Facing.RIGHT, Facing.DOWN, Facing.LEFT]
         idx = order.index(self._facing)
         self._facing = order[(idx + 1) % 4]
@@ -294,7 +288,6 @@ class SentryGrid:
 def next_step_toward(pos, target, obstacles, current_facing=Facing.UP):
     """TODO(Q4)：返回下一步应朝向的 Facing；
     候选判定、优先级与回退规则见题面 Q4 规范。"""
-    # raise NotImplementedError("Q4 next_step_toward：题面 Q4·贪心策略与回退")
     px, py = pos
     tx, ty = target
     dx = tx - px
@@ -350,7 +343,6 @@ class SentryState(Enum):
 def decide(sensor, state, hp, heat):
     """TODO(Q5)：纯函数决策，返回 (action: str, new_state: SentryState)；
     sensor 字段契约、R1-R7 规则表与非法输入处理见题面 Q5 规范。"""
-    # raise NotImplementedError("Q5 decide：题面 Q5·决策规则表 R1-R7")
     # ---- 输入契约校验 ----
     if not isinstance(sensor, dict):
         raise ValueError("sensor 必须为 dict")
@@ -370,7 +362,6 @@ def decide(sensor, state, hp, heat):
     if ratio <= 20:
         return ("RETREAT", SentryState.RETREAT)
 
-    # Q5 commit 2: ENGAGE/RETREAT/RETURN
     if state == SentryState.PATROL:
         if enemy_seen:
             return ("SCAN", SentryState.SUSPECT)
@@ -400,7 +391,6 @@ def decide(sensor, state, hp, heat):
 def run_patrol(grid, max_steps=500):
     """TODO(Q6)：sense → decide → act 主循环；
     循环结构、终止条件、脱困自由度与统计返回契约见题面 Q6 规范。"""
-    # raise NotImplementedError("Q6 run_patrol：题面 Q6·主循环与统计契约")
     start_pos = grid.current_pos
     state = SentryState.PATROL
     hp = 100
@@ -520,7 +510,6 @@ def _retreat_direction(grid):
 
 def report_to_json(stats):
     """TODO(Q6)：把 stats 序列化为确定性的 JSON 字符串，见题面 Q6 规范。"""
-    # raise NotImplementedError("Q6 report_to_json：题面 Q6·报告序列化")
     return json.dumps(stats, sort_keys=True, ensure_ascii=False)
 
 
@@ -529,7 +518,6 @@ def report_to_json(stats):
 # ---------------------------------------------------------------------------
 def bfs_path_length(start, target, obstacles):
     """TODO(Bonus)：BFS 全局最短路步数；返回语义与边界职责见题面 Bonus 规范。"""
-    # raise NotImplementedError("Bonus bfs_path_length")
     start = (int(start[0]), int(start[1]))
     target = (int(target[0]), int(target[1]))
     if start == target:
@@ -539,7 +527,6 @@ def bfs_path_length(start, target, obstacles):
         obs.add((int(ob[0]), int(ob[1])))
     if target in obs or start in obs:
         return -1
-    from collections import deque
     visited = {start}
     queue = deque([(start, 0)])
     dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
