@@ -365,6 +365,11 @@ def decide(sensor, state, hp, heat):
     enemy_seen = any(frames)
     two_frames = len(frames) >= 2 and frames[-1] and frames[-2]
 
+    # 低血量（≤20%）最高优先级：直接撤退，覆盖所有状态
+    ratio = hp_ratio(hp, max_hp)
+    if ratio <= 20:
+        return ("RETREAT", SentryState.RETREAT)
+
     # Q5 commit 2: ENGAGE/RETREAT/RETURN
     if state == SentryState.PATROL:
         if enemy_seen:
