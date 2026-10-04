@@ -68,7 +68,37 @@ python main.py
 
 CI 只允许修改 `src/main/**`、`README.md` 与 `.agent-sessions/**`（AI 会话归档）——其余文件改了直接红；autopep8 `--diff` 非空即败。提交方式（push、问卷、commit 粒度）见题面"提交与验收"一节。
 
-## 6. Q7 遗留模块缺陷修复说明
+## 6. Q3–Q6 实现说明
+
+### Q3 SentryGrid 物理规则
+
+实现 `SentryGrid` 的四个方法：
+
+1. **`current_pos` setter**：三重输入校验——必须是长度为 2 的序列、元素为 int、坐标在网格范围内，否则抛 `ValueError`。
+2. **`move_forward`**：先检查电量是否耗尽（`battery == 0` 抛错），再计算目标格；若越界或撞障碍则不耗电、原位不动、返回原朝向；否则移动一格、耗电 1、返回当前朝向。
+3. **`turn_left` / `turn_right`**：按 `[UP, LEFT, DOWN, RIGHT]`（左转）和 `[UP, RIGHT, DOWN, LEFT]`（右转）顺序循环切换朝向，不耗电。
+
+### Q4 贪心寻路 `next_step_toward`
+
+1. **主轴选择**：水平距离 ≥ 垂直距离时优先水平方向，否则优先垂直方向。
+2. **障碍判定**：跳过被障碍物占据或越界的候选方向；全部候选阻塞时回退到 `current_facing`。
+3. **y 轴映射**：世界坐标 y 向上增长，垂直方向用 `Facing.UP`（y+）和 `Facing.DOWN`（y-）。
+
+### Q5 决策 `decide`
+
+按规则表 R1–R7 实现状态机：
+
+1. **输入校验**：`sensor` 非 dict 或血量/距离/可见性字段缺失/类型错误时返回 `("RETREAT", SentryState.RETREAT)`。
+2. **低血量优先**：血量百分比 ≤ 20% 时无条件 `RETREAT`，覆盖所有状态。
+3. **状态转换**：`PATROL`（无敌人则原地 SCAN）→ `SUSPECT`（敌人可见但 >5m）→ `ENGAGE`（敌人可见且 ≤5m）→ `RETREAT`（血量 ≤ 20% 或弹药耗尽）→ `RETURN`（回到出生点后恢复 PATROL）。
+
+### Q6 巡逻主循环
+
+1. **`run_patrol`**：sense-decide-act 主循环，统计步数、SCAN/SHOOT/RETREAT 次数；`SCAN` 与 `SHOOT` 时向敌人方向移动一格以接近目标；最大步数限制防止死循环。
+2. **`report_to_json`**：用 `json.dumps(stats, sort_keys=True, ensure_ascii=False)` 序列化统计结果，保证输出确定性。
+3. **`bfs_path_length`**：BFS 求从起点到目标的最短步数，起点或终点在障碍物上时返回 -1。
+
+## 7. Q7 遗留模块缺陷修复说明
 
 `src/main/legacy_patrol.py` 共修复 6 处 bug：
 
