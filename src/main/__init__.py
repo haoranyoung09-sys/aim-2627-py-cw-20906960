@@ -350,7 +350,33 @@ class SentryState(Enum):
 def decide(sensor, state, hp, heat):
     """TODO(Q5)：纯函数决策，返回 (action: str, new_state: SentryState)；
     sensor 字段契约、R1-R7 规则表与非法输入处理见题面 Q5 规范。"""
-    raise NotImplementedError("Q5 decide：题面 Q5·决策规则表 R1-R7")
+    # raise NotImplementedError("Q5 decide：题面 Q5·决策规则表 R1-R7")
+    # ---- 输入契约校验 ----
+    if not isinstance(sensor, dict):
+        raise ValueError("sensor 必须为 dict")
+    frames = sensor.get("enemy_frames")
+    if (not isinstance(frames, (list, tuple)) or len(frames) == 0
+            or not all(isinstance(f, bool) for f in frames)):
+        raise ValueError("enemy_frames 必须是非空 bool 序列")
+    if not isinstance(state, SentryState):
+        raise ValueError("state 必须为 SentryState")
+    max_hp = sensor.get("max_hp", 100)
+
+    enemy_seen = any(frames)
+    two_frames = len(frames) >= 2 and frames[-1] and frames[-2]
+
+    # Q5 commit 2: ENGAGE/RETREAT/RETURN + 低血量优先级
+    if state == SentryState.PATROL:
+        if enemy_seen:
+            return ("SCAN", SentryState.SUSPECT)
+        return ("PATROL_MOVE", SentryState.PATROL)
+    elif state == SentryState.SUSPECT:
+        if two_frames:
+            return ("SHOOT", SentryState.ENGAGE)
+        if enemy_seen:
+            return ("SCAN", SentryState.SUSPECT)
+        return ("PATROL_MOVE", SentryState.PATROL)
+    return ("PATROL_MOVE", SentryState.PATROL)
 
 
 # ---------------------------------------------------------------------------
